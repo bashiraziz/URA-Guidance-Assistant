@@ -6,6 +6,20 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _default_docs_root() -> str:
+    here = Path(__file__).resolve()
+    candidates = []
+    for parent in [here.parent, *here.parents]:
+        candidates.append(parent / "docs")
+        candidates.append(parent / ".." / "docs")
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved.exists() and resolved.is_dir():
+            return str(resolved)
+    # Safe fallback for containerized deploys where docs may be mounted separately.
+    return str((Path.cwd() / "docs").resolve())
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -36,7 +50,7 @@ class Settings(BaseSettings):
     quota_minute_requests: int = 10
     quota_inflight_requests: int = 1
 
-    docs_root: str = str((Path(__file__).resolve().parents[3] / "docs").resolve())
+    docs_root: str = Field(default_factory=_default_docs_root)
     cors_origins: str = "http://localhost:3000"
 
 
