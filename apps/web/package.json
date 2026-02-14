@@ -1,0 +1,37 @@
+{
+  "name": "ura-guidance-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-auth": "^1.1.18",
+    "clsx": "^2.1.1",
+    "gray-matter": "^4.0.3",
+    "jose": "^5.10.0",
+    "next": "^15.1.6",
+    "pg": "^8.13.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.3",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.13.4",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.6",
+    "globals": "^17.3.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.55.0"
+  }
+}

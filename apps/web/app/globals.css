@@ -1,0 +1,235 @@
+:root {
+  --font-ui: var(--font-sans), "Segoe UI", sans-serif;
+  --font-mono: var(--font-mono), "Courier New", monospace;
+
+  --bg: #f4f1ea;
+  --bg-accent: radial-gradient(circle at 0% 0%, #ffdca6 0%, rgba(255, 220, 166, 0) 45%),
+    radial-gradient(circle at 100% 0%, #b6e6dc 0%, rgba(182, 230, 220, 0) 40%),
+    linear-gradient(180deg, #f9f5ed 0%, #efe9df 100%);
+  --surface: #fffdf8;
+  --surface-border: #dacfbf;
+  --text: #1e1f1d;
+  --muted: #61625d;
+  --brand: #115d56;
+  --brand-soft: #d7efe9;
+  --danger: #a42a2a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101512;
+    --bg-accent: radial-gradient(circle at 0% 0%, rgba(120, 92, 35, 0.45) 0%, rgba(16, 21, 18, 0) 45%),
+      radial-gradient(circle at 100% 0%, rgba(19, 84, 73, 0.35) 0%, rgba(16, 21, 18, 0) 45%),
+      linear-gradient(180deg, #111612 0%, #0d120f 100%);
+    --surface: #161c18;
+    --surface-border: #2d3a31;
+    --text: #f0f4ef;
+    --muted: #acb4ae;
+    --brand: #80dacb;
+    --brand-soft: rgba(128, 218, 203, 0.14);
+    --danger: #ff8f8f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-accent);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.vault-shell {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  min-height: 100vh;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.vault-sidebar {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.vault-content {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  padding: 1.5rem;
+  overflow: auto;
+}
+
+.doc-link {
+  display: block;
+  padding: 0.5rem 0.625rem;
+  border-radius: 10px;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.doc-link.active,
+.doc-link:hover {
+  background: var(--brand-soft);
+  color: var(--text);
+}
+
+.doc-markdown h1,
+.doc-markdown h2,
+.doc-markdown h3 {
+  scroll-margin-top: 1rem;
+}
+
+.doc-markdown code {
+  font-family: var(--font-mono);
+  background: var(--brand-soft);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+}
+
+.chat-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 1.1rem;
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+}
+
+.chat-drawer {
+  position: fixed;
+  right: 1rem;
+  bottom: 4.5rem;
+  width: min(420px, calc(100vw - 2rem));
+  height: min(640px, calc(100vh - 8rem));
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+}
+
+.chat-drawer-minimized {
+  height: auto;
+  grid-template-rows: auto;
+}
+
+.chat-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.chat-icon-btn {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.45rem;
+  cursor: pointer;
+}
+
+.chat-icon-btn:hover {
+  color: var(--text);
+  border-color: var(--brand);
+}
+
+.chat-messages {
+  padding: 0.9rem;
+  overflow: auto;
+}
+
+.chat-message {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 0.65rem;
+  margin-bottom: 0.6rem;
+}
+
+.chat-message.user {
+  background: var(--brand-soft);
+}
+
+.chat-message.assistant {
+  background: transparent;
+}
+
+.chat-input {
+  border-top: 1px solid var(--surface-border);
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.chat-input textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.chat-input button {
+  border: none;
+  border-radius: 10px;
+  background: var(--brand);
+  color: white;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+
+.quota {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+}
+
+@media (max-width: 900px) {
+  .vault-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .vault-sidebar {
+    max-height: 40vh;
+  }
+}
