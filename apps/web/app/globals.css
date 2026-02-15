@@ -625,6 +625,77 @@ a {
   color: var(--text);
 }
 
+/* ---- Read Aloud button ---- */
+
+.read-aloud-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.read-aloud-btn {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.read-aloud-btn:hover {
+  color: var(--text);
+  border-color: var(--brand);
+}
+
+.read-aloud-btn.speaking {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* ---- Chat mic button ---- */
+
+.chat-mic-btn {
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border: 1px solid var(--surface-border);
+  transition: background 0.2s, color 0.2s;
+}
+
+.chat-mic-btn:hover {
+  color: var(--text);
+  border-color: var(--brand);
+}
+
+.chat-mic-btn.listening {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+  animation: mic-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.chat-input.has-mic {
+  grid-template-columns: 1fr auto auto;
+}
+
 @media (max-width: 900px) {
   .landing-shell {
     grid-template-columns: 1fr;
@@ -675,6 +746,12 @@ a {
   }
 
   .chat-input button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .chat-mic-btn {
     width: 44px;
     height: 44px;
     min-width: 44px;

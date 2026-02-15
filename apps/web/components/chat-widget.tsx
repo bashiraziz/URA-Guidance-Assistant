@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 
 import { chatApi, type ApiMessage, type Citation, type Usage } from "@/services/chat-api";
+import ReadAloudButton from "@/components/read-aloud-button";
 
 type Message = {
   id: string;
@@ -29,6 +30,10 @@ export default function ChatWidget() {
   const [lang, setLang] = useState<"en" | "lg">("en");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [listening, setListening] = useState(false);
+  const [micSupported, setMicSupported] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000", []); // surfaced for support debugging
 
   useEffect(() => {
@@ -80,6 +85,48 @@ export default function ChatWidget() {
     };
     void run();
   }, [initialized, open]);
+
+  // Detect SpeechRecognition support
+  useEffect(() => {
+    const SR = typeof window !== "undefined"
+      ? (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition
+      : null;
+    setMicSupported(!!SR);
+  }, []);
+
+  // Cleanup recognition on unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.abort();
+    };
+  }, []);
+
+  function toggleMic() {
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setListening(false);
+      return;
+    }
+    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    if (!SR) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition = new (SR as any)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript;
+      if (transcript) {
+        setQuestion((prev) => (prev ? prev + " " + transcript : transcript));
+      }
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }
 
   async function ask() {
     const q = question.trim();
@@ -173,7 +220,10 @@ export default function ChatWidget() {
             <div className="chat-messages">
               {messages.map((m, i) => (
                 <article key={m.id || i} className={`chat-message ${m.role}`}>
-                  <strong>{m.role === "user" ? "You" : "Assistant"}</strong>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong>{m.role === "user" ? "You" : "Assistant"}</strong>
+                    {m.role === "assistant" && <ReadAloudButton text={m.content} />}
+                  </div>
                   <div style={{ marginTop: 6 }}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
                       {m.content}
@@ -208,7 +258,7 @@ export default function ChatWidget() {
             </div>
           )}
           {!minimized && (
-            <div className="chat-input">
+            <div className={`chat-input${micSupported && lang === "en" ? " has-mic" : ""}`}>
               <textarea
                 placeholder={lang === "en" ? "Ask about VAT, PAYE, filing, exemptions..." : "Buuza ku VAT, PAYE, okufayilo, ebitagobererwa..."}
                 value={question}
@@ -216,6 +266,17 @@ export default function ChatWidget() {
                 rows={3}
                 disabled={busy}
               />
+              {micSupported && lang === "en" && (
+                <button
+                  type="button"
+                  className={`chat-mic-btn${listening ? " listening" : ""}`}
+                  onClick={toggleMic}
+                  title={listening ? "Stop listening" : "Voice input"}
+                  disabled={busy}
+                >
+                  🎤
+                </button>
+              )}
               <button type="button" onClick={ask} disabled={busy}>
                 {busy ? "Sending..." : "Send"}
               </button>

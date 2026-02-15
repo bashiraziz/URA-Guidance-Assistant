@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import DocsBreadcrumb from "@/components/docs-breadcrumb";
 import DocsPrevNext from "@/components/docs-prev-next";
 import DocsSidebar from "@/components/docs-sidebar";
+import ReadAloudButton from "@/components/read-aloud-button";
 import { getSectionByPath, getSectionsTree } from "@/lib/docs";
 
 type Props = {
@@ -39,6 +40,9 @@ export default async function DocSectionPage({ params }: Props) {
           <h1 style={{ marginTop: 0, marginBottom: 0 }}>{page.title}</h1>
           {page.reading_time_minutes > 0 && (
             <span className="reading-time">{page.reading_time_minutes} min read</span>
+          )}
+          {!page.is_placeholder && page.content_md && (
+            <ReadAloudButton text={page.content_md} />
           )}
         </div>
 
