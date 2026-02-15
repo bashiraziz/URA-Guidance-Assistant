@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/docs";
@@ -36,48 +36,56 @@ export default function SignInPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1rem" }}>
-      <form
-        onSubmit={submit}
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          border: "1px solid var(--surface-border)",
-          borderRadius: 16,
-          padding: "1rem",
-          background: "var(--surface)"
-        }}
+    <form
+      onSubmit={submit}
+      style={{
+        width: "100%",
+        maxWidth: 420,
+        border: "1px solid var(--surface-border)",
+        borderRadius: 16,
+        padding: "1rem",
+        background: "var(--surface)"
+      }}
+    >
+      <h1 style={{ marginTop: 0 }}>URA Guidance Assistant</h1>
+      <p style={{ color: "var(--muted)", marginTop: 0 }}>Sign in for higher quotas and conversation history.</p>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        style={{ width: "100%", marginBottom: 8, padding: 10 }}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        style={{ width: "100%", marginBottom: 8, padding: 10 }}
+      />
+      {error ? <p className="error">{error}</p> : null}
+      <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
+        {loading ? "Please wait..." : "Sign In"}
+      </button>
+      <button
+        type="button"
+        onClick={() => router.push((`/signup?next=${encodeURIComponent(safeNext)}` as Route))}
+        style={{ width: "100%", marginTop: 8, padding: 10, background: "transparent" }}
       >
-        <h1 style={{ marginTop: 0 }}>URA Guidance Assistant</h1>
-        <p style={{ color: "var(--muted)", marginTop: 0 }}>Sign in for higher quotas and conversation history.</p>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ width: "100%", marginBottom: 8, padding: 10 }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ width: "100%", marginBottom: 8, padding: 10 }}
-        />
-        {error ? <p className="error">{error}</p> : null}
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
-          {loading ? "Please wait..." : "Sign In"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push((`/signup?next=${encodeURIComponent(safeNext)}` as Route))}
-          style={{ width: "100%", marginTop: 8, padding: 10, background: "transparent" }}
-        >
-          Need an account? Sign up
-        </button>
-      </form>
+        Need an account? Sign up
+      </button>
+    </form>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1rem" }}>
+      <Suspense>
+        <SignInForm />
+      </Suspense>
     </main>
   );
 }
