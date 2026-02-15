@@ -4,8 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Pool } from "pg";
 
+const connStr = process.env.DATABASE_URL || "";
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: connStr.includes("uselibpqcompat")
+    ? connStr
+    : connStr.includes("?")
+      ? `${connStr}&uselibpqcompat=true`
+      : `${connStr}?uselibpqcompat=true`
 });
 
 export const auth = betterAuth({

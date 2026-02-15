@@ -1,6 +1,6 @@
 import ChatWidget from "@/components/chat-widget";
 
-export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}

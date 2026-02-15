@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/docs"];
+const PROTECTED_PREFIXES = ["/account"];
 const POSSIBLE_SESSION_COOKIES = ["better-auth.session_token", "__Secure-better-auth.session_token"];
 
 export function middleware(request: NextRequest) {
@@ -22,5 +22,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/docs/:path*"]
+  matcher: ["/account/:path*"]
 };

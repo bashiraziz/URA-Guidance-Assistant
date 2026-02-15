@@ -1,0 +1,14 @@
+sources:
+  - id: tiny_vat_fixture
+    title: Tiny VAT Fixture
+    publisher: Fixture
+    category: VAT
+    doc_type: guidance
+    source_type: html
+    url:
+    acquisition: manual_download
+    local_path: docs/fixtures/tiny_vat_fixture.html
+    effective_from: "2025-01-01"
+    effective_to:
+    notes: Tiny fixture used by ingestion smoke test.
+    language_code: en-UG

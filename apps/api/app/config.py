@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     quota_daily_output_tokens: int = 2000
     quota_minute_requests: int = 10
     quota_inflight_requests: int = 1
+    guest_quota_daily_requests: int = 8
+    guest_quota_daily_output_tokens: int = 600
+    guest_quota_minute_requests: int = 3
 
     docs_root: str = Field(default_factory=_default_docs_root)
     cors_origins: str = "http://localhost:3000"

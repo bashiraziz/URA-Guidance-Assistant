@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import text
@@ -18,11 +18,19 @@ class QuotaLease:
     minute_iso: str
 
 
+@dataclass
+class QuotaLimits:
+    daily_requests: int
+    daily_output_tokens: int
+    minute_requests: int
+
+
 class QuotaService:
     def __init__(self, settings: Settings):
         self.settings = settings
 
     async def reserve(self, session: AsyncSession, user_id: str) -> tuple[QuotaLease, UsageEnvelope]:
+        limits = self._resolve_limits(user_id)
         now = datetime.now(UTC)
         day = now.date()
         minute = now.replace(second=0, microsecond=0)
@@ -74,20 +82,20 @@ class QuotaService:
                     )
                 ).mappings().first()
 
-                if int(daily_row["req_count"]) > self.settings.quota_daily_requests:
+                if int(daily_row["req_count"]) > limits.daily_requests:
                     self._raise_quota("Daily request limit reached for this account.", retry_after=3600)
-                if int(daily_row["token_out"]) >= self.settings.quota_daily_output_tokens:
+                if int(daily_row["token_out"]) >= limits.daily_output_tokens:
                     self._raise_quota("Daily output token budget reached for this account.", retry_after=3600)
-                if int(minute_row["req_count"]) > self.settings.quota_minute_requests:
+                if int(minute_row["req_count"]) > limits.minute_requests:
                     self._raise_quota("Rate limit reached. Please wait a minute and retry.", retry_after=60)
 
             usage = UsageEnvelope(
                 daily_requests_used=int(daily_row["req_count"]),
-                daily_requests_remaining=max(0, self.settings.quota_daily_requests - int(daily_row["req_count"])),
+                daily_requests_remaining=max(0, limits.daily_requests - int(daily_row["req_count"])),
                 minute_requests_used=int(minute_row["req_count"]),
-                minute_requests_remaining=max(0, self.settings.quota_minute_requests - int(minute_row["req_count"])),
+                minute_requests_remaining=max(0, limits.minute_requests - int(minute_row["req_count"])),
                 daily_output_tokens_used=int(daily_row["token_out"]),
-                daily_output_tokens_remaining=max(0, self.settings.quota_daily_output_tokens - int(daily_row["token_out"])),
+                daily_output_tokens_remaining=max(0, limits.daily_output_tokens - int(daily_row["token_out"])),
             )
             return QuotaLease(user_id=user_id, day=str(day), minute_iso=minute.isoformat()), usage
         except HTTPException:
@@ -101,6 +109,7 @@ class QuotaService:
         token_in: int,
         token_out: int,
     ) -> UsageEnvelope:
+        limits = self._resolve_limits(lease.user_id)
         async with session.begin():
             daily_row = (
                 await session.execute(
@@ -115,7 +124,7 @@ class QuotaService:
                         RETURNING req_count, token_out
                         """
                     ),
-                    {"token_in": token_in, "token_out": token_out, "user_id": lease.user_id, "day": lease.day},
+                    {"token_in": token_in, "token_out": token_out, "user_id": lease.user_id, "day": date.fromisoformat(lease.day)},
                 )
             ).mappings().first()
 
@@ -129,7 +138,7 @@ class QuotaService:
                           AND minute_ts = CAST(:minute_ts AS TIMESTAMPTZ)
                         """
                     ),
-                    {"user_id": lease.user_id, "minute_ts": lease.minute_iso},
+                    {"user_id": lease.user_id, "minute_ts": datetime.fromisoformat(lease.minute_iso)},
                 )
             ).mappings().first()
 
@@ -140,14 +149,14 @@ class QuotaService:
 
         return UsageEnvelope(
             daily_requests_used=int(daily_row["req_count"]),
-            daily_requests_remaining=max(0, self.settings.quota_daily_requests - int(daily_row["req_count"])),
+            daily_requests_remaining=max(0, limits.daily_requests - int(daily_row["req_count"])),
             minute_requests_used=int(minute_row["req_count"]) if minute_row else 0,
             minute_requests_remaining=max(
                 0,
-                self.settings.quota_minute_requests - (int(minute_row["req_count"]) if minute_row else 0),
+                limits.minute_requests - (int(minute_row["req_count"]) if minute_row else 0),
             ),
             daily_output_tokens_used=int(daily_row["token_out"]),
-            daily_output_tokens_remaining=max(0, self.settings.quota_daily_output_tokens - int(daily_row["token_out"])),
+            daily_output_tokens_remaining=max(0, limits.daily_output_tokens - int(daily_row["token_out"])),
         )
 
     async def release(self, session: AsyncSession, user_id: str) -> None:
@@ -159,4 +168,17 @@ class QuotaService:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={"message": message, "retry_after_seconds": retry_after},
+        )
+
+    def _resolve_limits(self, user_id: str) -> QuotaLimits:
+        if user_id.startswith("guest:"):
+            return QuotaLimits(
+                daily_requests=self.settings.guest_quota_daily_requests,
+                daily_output_tokens=self.settings.guest_quota_daily_output_tokens,
+                minute_requests=self.settings.guest_quota_minute_requests,
+            )
+        return QuotaLimits(
+            daily_requests=self.settings.quota_daily_requests,
+            daily_output_tokens=self.settings.quota_daily_output_tokens,
+            minute_requests=self.settings.quota_minute_requests,
         )

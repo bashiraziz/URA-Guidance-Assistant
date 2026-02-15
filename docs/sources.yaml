@@ -1,0 +1,160 @@
+sources:
+  # ──────────── Acts (auto-fetched from ULII) ────────────
+
+  - id: vat_act_cap_349
+    title: Value Added Tax Act (Cap 349)
+    publisher: ULII/Laws.Africa
+    category: VAT
+    doc_type: act
+    source_type: html
+    url: https://ulii.org/akn/ug/act/statute/1996/8/eng%402000-12-31
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Core VAT statute.
+    language_code: en-UG
+
+  - id: vat_amendment_2024
+    title: VAT (Amendment) Act, 2024
+    publisher: Parliament of Uganda
+    category: VAT
+    doc_type: amendment
+    source_type: pdf
+    url: https://bills.parliament.ug/attachments/Value%20Added%20Tax%20%28Amendment%29%20Act%2C%202024.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Amendment act PDF from Parliament.
+    language_code: en-UG
+
+  - id: income_tax_act_cap_340
+    title: Income Tax Act (Cap 340)
+    publisher: ULII/Laws.Africa
+    category: PAYE
+    doc_type: act
+    source_type: html
+    url: https://ulii.org/akn/ug/act/1997/11
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Base law for PAYE and WHT obligations.
+    language_code: en-UG
+
+  - id: income_tax_amendment_2024
+    title: Income Tax (Amendment) Act, 2024
+    publisher: Parliament of Uganda
+    category: PAYE
+    doc_type: amendment
+    source_type: pdf
+    url: https://bills.parliament.ug/attachments/Income%20Tax%20%28Amendment%29%20Act%2C%202024.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Includes PAYE/WHT changes where applicable.
+    language_code: en-UG
+
+  - id: tpc_act_2014
+    title: Tax Procedures Code Act, 2014
+    publisher: ULII/Laws.Africa
+    category: registration
+    doc_type: act
+    source_type: html
+    url: https://ulii.org/akn/ug/act/2014/14
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Registration, filing, penalties, objections and appeals.
+    language_code: en-UG
+
+  - id: tpc_amendment_2024
+    title: Tax Procedures Code (Amendment) Act, 2024
+    publisher: Parliament of Uganda
+    category: penalties
+    doc_type: amendment
+    source_type: pdf
+    url: https://bills.parliament.ug/attachments/Tax%20Procedures%20Code%20%28Amendment%29%20Act%2C%202024.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Amendment updates to tax procedures and penalties.
+    language_code: en-UG
+
+  # ──────────── URA Guides (auto-fetched PDFs) ────────────
+
+  - id: ura_efris_handbook
+    title: EFRIS Handbook 2024-25
+    publisher: Uganda Revenue Authority
+    category: EFRIS
+    doc_type: manual
+    source_type: pdf
+    url: https://ura.go.ug/storage/2025/01/THE-EFRIS-HANDBOOK-2024-25-2.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Official EFRIS handbook covering registration, invoicing, and compliance.
+    language_code: en-UG
+
+  - id: ura_taxation_handbook
+    title: URA Taxation Handbook FY 2023-24
+    publisher: Uganda Revenue Authority
+    category: VAT
+    doc_type: guidance
+    source_type: pdf
+    url: https://ura.go.ug/wp-content/uploads/2024/06/Taxation-handbook-FY2023-24.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Comprehensive guide covering VAT, PAYE, income tax, penalties, and registration.
+    language_code: en-UG
+
+  - id: ura_wht_guide
+    title: URA Withholding Tax Guide 2023-24
+    publisher: Uganda Revenue Authority
+    category: WHT
+    doc_type: guidance
+    source_type: pdf
+    url: https://ura.go.ug/wp-content/uploads/2024/05/WITHHOLDING-TAX-2023-24-1.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Official URA guide on withholding tax rates and obligations.
+    language_code: en-UG
+
+  - id: ura_interest_waiver_guide
+    title: URA Quick Facts - Waiver of Interest and Penalty
+    publisher: Uganda Revenue Authority
+    category: penalties
+    doc_type: guidance
+    source_type: pdf
+    url: https://ura.go.ug/wp-content/uploads/2024/09/QUICK-FACTS-ABOUT-THE-WAIVER-OF-INTEREST.pdf
+    acquisition: fetch
+    local_path:
+    effective_from:
+    effective_to:
+    notes: Quick facts on the waiver of interest and penalty provisions.
+    language_code: en-UG
+
+  # ──────────── Manual-download placeholders ────────────
+
+  - id: ura_efris_api_docs
+    title: URA EFRIS API Documentation
+    publisher: Uganda Revenue Authority
+    category: EFRIS
+    doc_type: technical
+    source_type: pdf
+    url:
+    acquisition: manual_download
+    local_path: docs/raw/ura/efris/ura_efris_api_docs.pdf
+    effective_from:
+    effective_to:
+    notes: Not publicly available. Contact URA System Integration team for access.
+    language_code: en-UG

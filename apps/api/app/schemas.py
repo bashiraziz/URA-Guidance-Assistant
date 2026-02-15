@@ -68,3 +68,41 @@ class DocsPageResponse(BaseModel):
     title: str
     category: str = "General"
     content_md: str
+
+
+class DocSectionNode(BaseModel):
+    id: str
+    slug: str
+    full_path: str
+    title: str
+    level: int
+    section_ref: str | None = None
+    word_count: int = 0
+    reading_time_minutes: int = 0
+    is_placeholder: bool = False
+    children: list["DocSectionNode"] = []
+
+
+class BreadcrumbItem(BaseModel):
+    title: str
+    full_path: str
+
+
+class PrevNextLink(BaseModel):
+    title: str
+    full_path: str
+
+
+class DocSectionPage(BaseModel):
+    id: str
+    full_path: str
+    title: str
+    section_ref: str | None = None
+    content_md: str
+    level: int
+    word_count: int = 0
+    reading_time_minutes: int = 0
+    is_placeholder: bool = False
+    breadcrumbs: list[BreadcrumbItem] = []
+    prev: PrevNextLink | None = None
+    next: PrevNextLink | None = None

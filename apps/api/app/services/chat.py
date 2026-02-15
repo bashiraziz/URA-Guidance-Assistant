@@ -13,7 +13,7 @@ from app.retrieval.base import Retriever
 from app.schemas import ChatRequest, ChatResponse, Citation
 from app.services.cache import get_cached_answer, set_cached_answer
 from app.services.calculators import calculate_paye, calculate_vat, should_run_paye, should_run_vat
-from app.services.llm import generate_answer
+from app.services.llm import generate_answer, get_off_topic_reply, is_on_topic
 from app.services.quota import QuotaService
 
 _STOPWORDS = {
@@ -93,6 +93,21 @@ class ChatService:
         try:
             conversation_id = await self._ensure_conversation(session, user_id, request.conversation_id)
 
+            # --- Topic gate: reject off-topic questions early ---
+            if not await is_on_topic(request.question, self.settings):
+                off_topic_reply = get_off_topic_reply(request.language_code)
+                token_in = max(1, len(request.question.split()))
+                token_out = max(1, len(off_topic_reply.split()))
+                usage = await self.quota.finalize(session, lease, token_in=token_in, token_out=token_out)
+                await session.commit()
+                return ChatResponse(
+                    conversation_id=conversation_id,
+                    answer_md=off_topic_reply,
+                    citations=[],
+                    calculation=None,
+                    usage=usage,
+                )
+
             cached = await get_cached_answer(session, request.question, request.language_code)
             if cached:
                 answer_md, citations = cached
@@ -125,7 +140,7 @@ class ChatService:
             elif should_run_paye(request.question):
                 calc = calculate_paye(request.question)
 
-            llm_result = await generate_answer(settings=self.settings, question=request.question, chunks=chunks)
+            llm_result = await generate_answer(settings=self.settings, question=request.question, chunks=chunks, language_code=request.language_code)
             answer_md = llm_result.answer_md
             token_in = llm_result.estimated_input_tokens
             token_out = llm_result.estimated_output_tokens

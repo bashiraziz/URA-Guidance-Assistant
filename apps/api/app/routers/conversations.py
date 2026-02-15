@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user_id
+from app.auth import get_token_payload
 from app.db import get_session
 from app.schemas import ConversationSummary, MessageModel
 
@@ -11,9 +11,15 @@ router = APIRouter(prefix="/v1", tags=["conversations"])
 
 @router.get("/conversations", response_model=list[ConversationSummary])
 async def list_conversations(
-    user_id: str = Depends(get_current_user_id),
+    payload: dict = Depends(get_token_payload),
     session: AsyncSession = Depends(get_session),
 ) -> list[ConversationSummary]:
+    user_id = str(payload["sub"])
+    if user_id.startswith("guest:"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Conversation history is only available for signed-in users.",
+        )
     rows = (
         await session.execute(
             text(
@@ -40,9 +46,16 @@ async def list_conversations(
 @router.get("/conversations/{conversation_id}", response_model=list[MessageModel])
 async def get_conversation_messages(
     conversation_id: str,
-    user_id: str = Depends(get_current_user_id),
+    payload: dict = Depends(get_token_payload),
     session: AsyncSession = Depends(get_session),
 ) -> list[MessageModel]:
+    user_id = str(payload["sub"])
+    if user_id.startswith("guest:"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Conversation history is only available for signed-in users.",
+        )
+
     owner = (
         await session.execute(
             text("SELECT 1 FROM conversations WHERE id = :id AND user_id = :user_id"),

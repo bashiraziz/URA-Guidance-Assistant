@@ -21,19 +21,40 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [accessMode, setAccessMode] = useState<"guest" | "user">("guest");
   const [question, setQuestion] = useState("");
   const [conversationId, setConversationId] = useState<string>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [usage, setUsage] = useState<Usage | null>(null);
+  const [lang, setLang] = useState<"en" | "lg">("en");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const apiBase = useMemo(() => process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000", []); // surfaced for support debugging
+
+  useEffect(() => {
+    if (!open) {
+      setInitialized(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open || initialized) {
       return;
     }
     const run = async () => {
+      let mode: "guest" | "user" = "guest";
+      try {
+        mode = await chatApi.getAccessMode();
+      } catch {
+        mode = "guest";
+      }
+      setAccessMode(mode);
+
+      if (mode === "guest") {
+        setInitialized(true);
+        return;
+      }
+
       const savedConversationId = localStorage.getItem(STORAGE_KEY);
       if (!savedConversationId) {
         setInitialized(true);
@@ -77,12 +98,16 @@ export default function ChatWidget() {
     setMessages((prev) => [...prev, localUserMessage]);
     try {
       const data = await chatApi.sendMessage({
-        conversation_id: conversationId,
-        language_code: "en",
+        conversation_id: accessMode === "user" ? conversationId : undefined,
+        language_code: lang,
         question: q
       });
-      setConversationId(data.conversation_id);
-      localStorage.setItem(STORAGE_KEY, data.conversation_id);
+      if (accessMode === "user") {
+        setConversationId(data.conversation_id);
+        localStorage.setItem(STORAGE_KEY, data.conversation_id);
+      } else {
+        setConversationId(undefined);
+      }
       setUsage(data.usage);
       setMessages((prev) => [
         ...prev,
@@ -120,10 +145,22 @@ export default function ChatWidget() {
             <div>
               <strong>Ask URA Tax</strong>
               <p style={{ margin: "0.2rem 0 0", color: "var(--muted)", fontSize: "0.86rem" }}>
-                Evidence-backed answers with citations.
+                {accessMode === "guest"
+                  ? "Guest mode: lower quotas and no conversation history."
+                  : "Evidence-backed answers with citations."}
               </p>
             </div>
             <div className="chat-header-actions">
+              <button
+                type="button"
+                className="chat-lang-btn"
+                onClick={() => setLang((v) => (v === "en" ? "lg" : "en"))}
+                title={lang === "en" ? "Switch to Luganda" : "Switch to English"}
+              >
+                <span className="chat-lang-active">{lang === "en" ? "EN" : "LG"}</span>
+                <span className="chat-lang-separator">/</span>
+                <span className="chat-lang-inactive">{lang === "en" ? "LG" : "EN"}</span>
+              </button>
               <button type="button" className="chat-icon-btn" onClick={() => setMinimized((v) => !v)} title="Minimize">
                 {minimized ? "Expand" : "Minimize"}
               </button>
@@ -158,16 +195,26 @@ export default function ChatWidget() {
                   ) : null}
                 </article>
               ))}
-              {error ? <p className="error">{error}</p> : null}
+              {busy ? (
+                <div className="chat-loading">
+                  <div className="chat-loading-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+              ) : null}
+              {error ? <p className="chat-error">{error}</p> : null}
             </div>
           )}
           {!minimized && (
             <div className="chat-input">
               <textarea
-                placeholder="Ask about VAT, PAYE, filing, exemptions..."
+                placeholder={lang === "en" ? "Ask about VAT, PAYE, filing, exemptions..." : "Buuza ku VAT, PAYE, okufayilo, ebitagobererwa..."}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 rows={3}
+                disabled={busy}
               />
               <button type="button" onClick={ask} disabled={busy}>
                 {busy ? "Sending..." : "Send"}
@@ -177,6 +224,7 @@ export default function ChatWidget() {
           {!minimized && usage ? (
             <footer style={{ borderTop: "1px solid var(--surface-border)", padding: "0.5rem 0.75rem" }}>
               <div className="quota">
+                {accessMode === "guest" ? "Guest limits. Sign in for higher quotas. | " : ""}
                 Daily requests left: {usage.daily_requests_remaining} | Minute requests left: {usage.minute_requests_remaining}
                 {" | "}Output tokens left: {usage.daily_output_tokens_remaining}
               </div>
