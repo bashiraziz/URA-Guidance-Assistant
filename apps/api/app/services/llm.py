@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.retrieval.base import RetrievedChunk
+from app.services.providers import LLMResult
 
 # ---------------------------------------------------------------------------
-# Topic-gating keywords used when Gemini is unavailable
+# Topic-gating keywords used when no LLM is available
 # ---------------------------------------------------------------------------
 _TAX_KEYWORDS: set[str] = {
     "vat", "paye", "wht", "efris", "tax", "ura", "income", "withholding",
@@ -44,9 +46,53 @@ def get_off_topic_reply(language_code: str) -> str:
     return _OFF_TOPIC_REPLIES[key]
 
 
-async def is_on_topic(question: str, settings: Settings) -> bool:
-    """Return True if *question* is about Uganda tax / URA topics."""
+# ---------------------------------------------------------------------------
+# LLM answer generation
+# ---------------------------------------------------------------------------
 
+def _estimate_tokens(text: str) -> int:
+    return max(1, len(text.split()))
+
+
+_GEMINI_SYSTEM_PROMPT = """\
+You are a Uganda tax law assistant. You MUST follow these rules strictly:
+
+1. Answer PRIMARILY from the provided Evidence excerpts. Cite them by number [1], [2], etc.
+2. If the evidence fully answers the question, use ONLY the evidence.
+3. If the evidence partially answers it, present the evidence-based answer first, then clearly separate any supplementary knowledge with:
+   "\u26a0 **Additional context (not from the indexed URA corpus):** ..."
+4. If your general knowledge includes a MORE RECENT amendment or proclamation than what appears in the evidence, say so explicitly, e.g.:
+   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in the indexed corpus."
+5. Never fabricate legal provisions. If uncertain, say so.
+6. Keep answers concise. Use markdown formatting.
+"""
+
+_NO_CHUNKS_FALLBACKS: dict[str, str] = {
+    "en": (
+        "I could not find enough evidence in the current corpus for that question.\n\n"
+        "Please clarify the tax type, period, and exact transaction details."
+    ),
+    "lg": (
+        "Sisobodde kuzuula bujjulizi bumala mu ky'obuuzizza.\n\n"
+        "Nsaba onnyonyole ekika ky'omusolo, ekiseera, n'ebikwata ku mulimu gwo."
+    ),
+}
+
+_LUGANDA_RULE = (
+    "7. Respond ENTIRELY in Luganda (Ganda language). "
+    "Translate legal terms but keep Act names and section numbers in English for precision."
+)
+
+
+async def is_on_topic(question: str, settings: Settings, session: AsyncSession | None = None, user_id: str | None = None) -> bool:
+    """Return True if *question* is about Uganda tax / URA topics."""
+    if session and user_id:
+        from app.services.providers import resolve_provider
+        resolved = await resolve_provider(settings, session, user_id)
+        model = getattr(resolved.provider, "_custom_model", None)
+        return await resolved.provider.is_on_topic(question, model=model)
+
+    # Legacy path: no session/user_id provided
     if settings.gemini_enabled:
         try:
             import google.generativeai as genai  # type: ignore
@@ -75,58 +121,21 @@ def _keyword_on_topic(question: str) -> bool:
     return bool(words & _TAX_KEYWORDS)
 
 
-# ---------------------------------------------------------------------------
-# LLM answer generation
-# ---------------------------------------------------------------------------
-
-@dataclass
-class LLMResult:
-    answer_md: str
-    estimated_input_tokens: int
-    estimated_output_tokens: int
-
-
-def _estimate_tokens(text: str) -> int:
-    return max(1, len(text.split()))
-
-
-_GEMINI_SYSTEM_PROMPT = """\
-You are a Uganda tax law assistant. You MUST follow these rules strictly:
-
-1. Answer PRIMARILY from the provided Evidence excerpts. Cite them by number [1], [2], etc.
-2. If the evidence fully answers the question, use ONLY the evidence.
-3. If the evidence partially answers it, present the evidence-based answer first, then clearly separate any supplementary knowledge with:
-   "\u26a0 **Additional context (not from the indexed URA corpus):** ..."
-4. If your general knowledge includes a MORE RECENT amendment or proclamation than what appears in the evidence, say so explicitly, e.g.:
-   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in the indexed corpus."
-5. Never fabricate legal provisions. If uncertain, say so.
-6. Keep answers concise. Use markdown formatting.
-"""
-
-
-_NO_CHUNKS_FALLBACKS: dict[str, str] = {
-    "en": (
-        "I could not find enough evidence in the current corpus for that question.\n\n"
-        "Please clarify the tax type, period, and exact transaction details."
-    ),
-    "lg": (
-        "Sisobodde kuzuula bujjulizi bumala mu ky'obuuzizza.\n\n"
-        "Nsaba onnyonyole ekika ky'omusolo, ekiseera, n'ebikwata ku mulimu gwo."
-    ),
-}
-
-_LUGANDA_RULE = (
-    "7. Respond ENTIRELY in Luganda (Ganda language). "
-    "Translate legal terms but keep Act names and section numbers in English for precision."
-)
-
-
 async def generate_answer(
     settings: Settings,
     question: str,
     chunks: list[RetrievedChunk],
     language_code: str = "en",
+    session: AsyncSession | None = None,
+    user_id: str | None = None,
 ) -> LLMResult:
+    if session and user_id:
+        from app.services.providers import resolve_provider
+        resolved = await resolve_provider(settings, session, user_id)
+        model = getattr(resolved.provider, "_custom_model", None)
+        return await resolved.provider.generate_answer(question, chunks, language_code, model=model)
+
+    # Legacy path
     is_luganda = language_code.startswith("lg")
     fallback_key = "lg" if is_luganda else "en"
 

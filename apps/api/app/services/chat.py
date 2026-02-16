@@ -41,7 +41,13 @@ def rewrite_query_fallback(question: str) -> str:
     return " ".join(keywords[:12]) or question
 
 
-async def rewrite_query(question: str, settings: Settings) -> str:
+async def rewrite_query(question: str, settings: Settings, session: AsyncSession | None = None, user_id: str | None = None) -> str:
+    if session and user_id:
+        from app.services.providers import resolve_provider
+        resolved = await resolve_provider(settings, session, user_id)
+        model = getattr(resolved.provider, "_custom_model", None)
+        return await resolved.provider.rewrite_query(question, model=model)
+
     if not settings.gemini_enabled:
         return rewrite_query_fallback(question)
     try:
@@ -94,7 +100,7 @@ class ChatService:
             conversation_id = await self._ensure_conversation(session, user_id, request.conversation_id)
 
             # --- Topic gate: reject off-topic questions early ---
-            if not await is_on_topic(request.question, self.settings):
+            if not await is_on_topic(request.question, self.settings, session=session, user_id=user_id):
                 off_topic_reply = get_off_topic_reply(request.language_code)
                 token_in = max(1, len(request.question.split()))
                 token_out = max(1, len(off_topic_reply.split()))
@@ -124,7 +130,7 @@ class ChatService:
                     usage=usage,
                 )
 
-            rewritten_query = await rewrite_query(request.question, self.settings)
+            rewritten_query = await rewrite_query(request.question, self.settings, session=session, user_id=user_id)
             async with session.begin():
                 chunks = await self.retriever.retrieve(
                     session=session,
@@ -140,7 +146,7 @@ class ChatService:
             elif should_run_paye(request.question):
                 calc = calculate_paye(request.question)
 
-            llm_result = await generate_answer(settings=self.settings, question=request.question, chunks=chunks, language_code=request.language_code)
+            llm_result = await generate_answer(settings=self.settings, question=request.question, chunks=chunks, language_code=request.language_code, session=session, user_id=user_id)
             answer_md = llm_result.answer_md
             token_in = llm_result.estimated_input_tokens
             token_out = llm_result.estimated_output_tokens

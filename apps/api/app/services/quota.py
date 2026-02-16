@@ -30,7 +30,9 @@ class QuotaService:
         self.settings = settings
 
     async def reserve(self, session: AsyncSession, user_id: str) -> tuple[QuotaLease, UsageEnvelope]:
-        limits = self._resolve_limits(user_id)
+        from app.services.providers import has_byok_provider
+        has_byok = await has_byok_provider(session, user_id)
+        limits = self._resolve_limits(user_id, has_byok=has_byok)
         now = datetime.now(UTC)
         day = now.date()
         minute = now.replace(second=0, microsecond=0)
@@ -109,7 +111,9 @@ class QuotaService:
         token_in: int,
         token_out: int,
     ) -> UsageEnvelope:
-        limits = self._resolve_limits(lease.user_id)
+        from app.services.providers import has_byok_provider
+        has_byok = await has_byok_provider(session, lease.user_id)
+        limits = self._resolve_limits(lease.user_id, has_byok=has_byok)
         async with session.begin():
             daily_row = (
                 await session.execute(
@@ -170,12 +174,18 @@ class QuotaService:
             detail={"message": message, "retry_after_seconds": retry_after},
         )
 
-    def _resolve_limits(self, user_id: str) -> QuotaLimits:
+    def _resolve_limits(self, user_id: str, has_byok: bool = False) -> QuotaLimits:
         if user_id.startswith("guest:"):
             return QuotaLimits(
                 daily_requests=self.settings.guest_quota_daily_requests,
                 daily_output_tokens=self.settings.guest_quota_daily_output_tokens,
                 minute_requests=self.settings.guest_quota_minute_requests,
+            )
+        if has_byok:
+            return QuotaLimits(
+                daily_requests=self.settings.byok_quota_daily_requests,
+                daily_output_tokens=self.settings.byok_quota_daily_output_tokens,
+                minute_requests=self.settings.byok_quota_minute_requests,
             )
         return QuotaLimits(
             daily_requests=self.settings.quota_daily_requests,

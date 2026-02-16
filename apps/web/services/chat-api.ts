@@ -131,6 +131,59 @@ class ChatApi {
     }
     return (await response.json()) as ApiMessage[];
   }
+
+  // ---------------------------------------------------------------------------
+  // Provider BYOK endpoints
+  // ---------------------------------------------------------------------------
+
+  async getProviders(): Promise<ProviderInfo[]> {
+    const response = await this.authedFetch("/v1/user/providers", { method: "GET" });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(body || `Failed to load providers (${response.status})`);
+    }
+    return (await response.json()) as ProviderInfo[];
+  }
+
+  async saveProvider(name: string, apiKey: string, modelName?: string): Promise<ProviderInfo> {
+    const response = await this.authedFetch(`/v1/user/providers/${name}`, {
+      method: "PUT",
+      body: JSON.stringify({ api_key: apiKey, model_name: modelName || null }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(formatApiError(body, response.status));
+    }
+    return (await response.json()) as ProviderInfo;
+  }
+
+  async deleteProvider(name: string): Promise<void> {
+    const response = await this.authedFetch(`/v1/user/providers/${name}`, { method: "DELETE" });
+    if (!response.ok && response.status !== 204) {
+      const body = await response.text();
+      throw new Error(formatApiError(body, response.status));
+    }
+  }
+
+  async testProvider(name: string): Promise<ProviderTestResult> {
+    const response = await this.authedFetch(`/v1/user/providers/${name}/test`, { method: "POST" });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(formatApiError(body, response.status));
+    }
+    return (await response.json()) as ProviderTestResult;
+  }
 }
+
+export type ProviderInfo = {
+  provider: string;
+  masked_key: string;
+  model_name: string | null;
+};
+
+export type ProviderTestResult = {
+  ok: boolean;
+  detail: string;
+};
 
 export const chatApi = new ChatApi();

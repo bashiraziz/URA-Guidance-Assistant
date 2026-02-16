@@ -8,6 +8,7 @@ from app.db import run_migrations
 from app.routers.chat import router as chat_router
 from app.routers.conversations import router as conversations_router
 from app.routers.docs import router as docs_router
+from app.routers.providers import router as providers_router
 
 settings = get_settings()
 
@@ -29,6 +30,7 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(conversations_router)
 app.include_router(docs_router)
+app.include_router(providers_router)
 
 
 @app.get("/healthz", tags=["system"])

@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     guest_quota_daily_output_tokens: int = 600
     guest_quota_minute_requests: int = 3
 
+    byok_quota_daily_requests: int = 125
+    byok_quota_daily_output_tokens: int = 10000
+    byok_quota_minute_requests: int = 30
+
+    provider_key_secret: str = Field(default="change-me-32-byte-fernet-key!!!")
+
     docs_root: str = Field(default_factory=_default_docs_root)
     cors_origins: str = "http://localhost:3000"
 

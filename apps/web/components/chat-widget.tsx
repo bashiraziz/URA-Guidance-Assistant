@@ -208,6 +208,11 @@ export default function ChatWidget() {
                 <span className="chat-lang-separator">/</span>
                 <span className="chat-lang-inactive">{lang === "en" ? "LG" : "EN"}</span>
               </button>
+              {accessMode === "user" && (
+                <a href="/settings" className="chat-icon-btn" title="LLM Provider Settings" style={{ textDecoration: "none" }}>
+                  Settings
+                </a>
+              )}
               <button type="button" className="chat-icon-btn" onClick={() => setMinimized((v) => !v)} title="Minimize">
                 {minimized ? "Expand" : "Minimize"}
               </button>
