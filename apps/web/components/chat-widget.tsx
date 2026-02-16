@@ -23,6 +23,7 @@ export default function ChatWidget() {
   const [minimized, setMinimized] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [accessMode, setAccessMode] = useState<"guest" | "user">("guest");
+  const [userName, setUserName] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [conversationId, setConversationId] = useState<string>();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -48,12 +49,16 @@ export default function ChatWidget() {
     }
     const run = async () => {
       let mode: "guest" | "user" = "guest";
+      let name: string | null = null;
       try {
-        mode = await chatApi.getAccessMode();
+        const info = await chatApi.getAccessInfo();
+        mode = info.mode;
+        name = info.user_name;
       } catch {
         mode = "guest";
       }
       setAccessMode(mode);
+      setUserName(name);
 
       if (mode === "guest") {
         setInitialized(true);
@@ -193,8 +198,8 @@ export default function ChatWidget() {
               <strong>Ask URA Tax</strong>
               <p style={{ margin: "0.2rem 0 0", color: "var(--muted)", fontSize: "0.86rem" }}>
                 {accessMode === "guest"
-                  ? "Guest mode: lower quotas and no conversation history."
-                  : "Evidence-backed answers with citations."}
+                  ? <span>Guest mode. <a href="/signup" style={{ color: "#fff", textDecoration: "underline" }}>Create an account</a> for higher quotas and saved history.</span>
+                  : <span>Signed in as <strong>{userName || "user"}</strong>. Higher quotas and saved history.</span>}
               </p>
             </div>
             <div className="chat-header-actions">
@@ -290,7 +295,7 @@ export default function ChatWidget() {
           {!minimized && usage ? (
             <footer style={{ borderTop: "1px solid var(--surface-border)", padding: "0.5rem 0.75rem" }}>
               <div className="quota">
-                {accessMode === "guest" ? "Guest limits. Sign in for higher quotas. | " : ""}
+                {accessMode === "guest" ? <><a href="/signin" style={{ color: "var(--brand)" }}>Sign in</a> or <a href="/signup" style={{ color: "var(--brand)" }}>sign up</a> for higher quotas. | </> : ""}
                 Daily requests left: {usage.daily_requests_remaining} | Minute requests left: {usage.minute_requests_remaining}
                 {" | "}Output tokens left: {usage.daily_output_tokens_remaining}
               </div>

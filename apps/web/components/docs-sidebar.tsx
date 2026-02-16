@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
@@ -30,14 +30,23 @@ function TreeNode({
   node,
   activePath,
   defaultOpen,
+  collapseKey,
 }: {
   node: SectionNode;
   activePath: string;
   defaultOpen: boolean;
+  collapseKey: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = node.children.length > 0;
   const isActive = node.full_path === activePath;
+
+  // Reset to collapsed when collapseKey changes (user clicked "Collapse All")
+  useEffect(() => {
+    if (collapseKey > 0) {
+      setOpen(false);
+    }
+  }, [collapseKey]);
 
   return (
     <div className="tree-node">
@@ -63,6 +72,7 @@ function TreeNode({
               node={child}
               activePath={activePath}
               defaultOpen={isAncestor(child, activePath)}
+              collapseKey={collapseKey}
             />
           ))}
         </div>
@@ -73,6 +83,7 @@ function TreeNode({
 
 export default function DocsSidebar({ tree, activePath }: Props) {
   const [query, setQuery] = useState("");
+  const [collapseKey, setCollapseKey] = useState(0);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -86,20 +97,38 @@ export default function DocsSidebar({ tree, activePath }: Props) {
 
   return (
     <aside className="vault-sidebar">
+      <div className="sidebar-top-nav">
+        <Link href="/" className="sidebar-nav-link">Home</Link>
+        <span className="sidebar-nav-sep">|</span>
+        <Link href="/signin" className="sidebar-nav-link">Sign in</Link>
+        <span className="sidebar-nav-sep">|</span>
+        <Link href="/signup" className="sidebar-nav-link">Sign up</Link>
+      </div>
       <h2 style={{ marginTop: 0 }}>URA Knowledge Vault</h2>
       <p style={{ color: "var(--muted)", marginTop: 0, marginBottom: 12 }}>Tax law and URA guidance documents</p>
-      <input
-        value={query}
-        onChange={handleSearchChange}
-        placeholder="Search docs..."
-        style={{
-          width: "100%",
-          marginBottom: 10,
-          border: "1px solid var(--surface-border)",
-          borderRadius: 10,
-          padding: "0.5rem",
-        }}
-      />
+      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <input
+          value={query}
+          onChange={handleSearchChange}
+          placeholder="Search docs..."
+          style={{
+            flex: 1,
+            border: "1px solid var(--surface-border)",
+            borderRadius: 10,
+            padding: "0.5rem",
+          }}
+        />
+        {!filtered && (
+          <button
+            type="button"
+            onClick={() => setCollapseKey((k) => k + 1)}
+            className="sidebar-collapse-btn"
+            title="Collapse all sections"
+          >
+            Collapse
+          </button>
+        )}
+      </div>
       {filtered ? (
         filtered.length === 0 ? (
           <p style={{ color: "var(--muted)", fontSize: "0.86rem" }}>No results.</p>
@@ -120,7 +149,7 @@ export default function DocsSidebar({ tree, activePath }: Props) {
         )
       ) : (
         tree.map((node) => (
-          <TreeNode key={node.id} node={node} activePath={activePath} defaultOpen={isAncestor(node, activePath)} />
+          <TreeNode key={node.id} node={node} activePath={activePath} defaultOpen={isAncestor(node, activePath)} collapseKey={collapseKey} />
         ))
       )}
     </aside>

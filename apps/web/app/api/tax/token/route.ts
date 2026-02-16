@@ -11,7 +11,7 @@ export async function GET() {
 
   if (session?.user?.id) {
     const token = await createApiToken(session.user.id, { tier: "user" });
-    return NextResponse.json({ token, expires_in: ttl, mode: "user" });
+    return NextResponse.json({ token, expires_in: ttl, mode: "user", user_name: session.user.name || session.user.email || null });
   }
 
   const cookieStore = await cookies();

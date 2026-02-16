@@ -24,6 +24,11 @@ export default async function HomePage() {
   return (
     <main className="landing-shell">
       <aside className="landing-sidebar">
+        <div className="sidebar-top-nav">
+          <Link href="/signin" className="sidebar-nav-link">Sign in</Link>
+          <span className="sidebar-nav-sep">|</span>
+          <Link href="/signup" className="sidebar-nav-link">Sign up</Link>
+        </div>
         <p className="landing-eyebrow">Reference</p>
         <h2>Uganda Tax Guides</h2>
         <p className="landing-muted">

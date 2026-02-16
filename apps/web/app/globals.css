@@ -61,6 +61,44 @@ a {
   padding: 1rem;
 }
 
+.sidebar-top-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+}
+
+.sidebar-nav-link {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.sidebar-nav-link:hover {
+  text-decoration: underline;
+}
+
+.sidebar-nav-sep {
+  color: var(--surface-border);
+}
+
+.sidebar-collapse-btn {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
 .vault-sidebar {
   background: var(--surface);
   border: 1px solid var(--surface-border);

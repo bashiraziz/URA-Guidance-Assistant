@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import text
@@ -85,9 +85,11 @@ class QuotaService:
                 ).mappings().first()
 
                 if int(daily_row["req_count"]) > limits.daily_requests:
-                    self._raise_quota("Daily request limit reached for this account.", retry_after=3600)
+                    seconds_until_reset = self._seconds_until_midnight()
+                    self._raise_quota("Daily request limit reached for this account.", retry_after=seconds_until_reset)
                 if int(daily_row["token_out"]) >= limits.daily_output_tokens:
-                    self._raise_quota("Daily output token budget reached for this account.", retry_after=3600)
+                    seconds_until_reset = self._seconds_until_midnight()
+                    self._raise_quota("Daily output token budget reached for this account.", retry_after=seconds_until_reset)
                 if int(minute_row["req_count"]) > limits.minute_requests:
                     self._raise_quota("Rate limit reached. Please wait a minute and retry.", retry_after=60)
 
@@ -166,6 +168,13 @@ class QuotaService:
     async def release(self, session: AsyncSession, user_id: str) -> None:
         async with session.begin():
             await session.execute(text("DELETE FROM inflight_requests WHERE user_id = :user_id"), {"user_id": user_id})
+
+    @staticmethod
+    def _seconds_until_midnight() -> int:
+        now = datetime.now(UTC)
+        midnight = (now.date() + timedelta(days=1))
+        midnight_dt = datetime(midnight.year, midnight.month, midnight.day, tzinfo=UTC)
+        return max(60, int((midnight_dt - now).total_seconds()))
 
     @staticmethod
     def _raise_quota(message: str, retry_after: int) -> None:

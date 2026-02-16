@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useState } from "react";
 import type { Route } from "next";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function SignInForm() {
@@ -36,47 +37,52 @@ function SignInForm() {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      style={{
-        width: "100%",
-        maxWidth: 420,
-        border: "1px solid var(--surface-border)",
-        borderRadius: 16,
-        padding: "1rem",
-        background: "var(--surface)"
-      }}
-    >
-      <h1 style={{ marginTop: 0 }}>URA Guidance Assistant</h1>
-      <p style={{ color: "var(--muted)", marginTop: 0 }}>Sign in for higher quotas and conversation history.</p>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        style={{ width: "100%", marginBottom: 8, padding: 10 }}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        style={{ width: "100%", marginBottom: 8, padding: 10 }}
-      />
-      {error ? <p className="error">{error}</p> : null}
-      <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
-        {loading ? "Please wait..." : "Sign In"}
-      </button>
-      <button
-        type="button"
-        onClick={() => router.push((`/signup?next=${encodeURIComponent(safeNext)}` as Route))}
-        style={{ width: "100%", marginTop: 8, padding: 10, background: "transparent" }}
+    <div style={{ width: "100%", maxWidth: 420 }}>
+      <Link href="/" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
+        &larr; Back to home
+      </Link>
+      <form
+        onSubmit={submit}
+        style={{
+          marginTop: 12,
+          border: "1px solid var(--surface-border)",
+          borderRadius: 16,
+          padding: "1rem",
+          background: "var(--surface)"
+        }}
       >
-        Need an account? Sign up
-      </button>
-    </form>
+        <h1 style={{ marginTop: 0 }}>URA Guidance Assistant</h1>
+        <p style={{ color: "var(--muted)", marginTop: 0 }}>Sign in for higher quotas and conversation history.</p>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ width: "100%", marginBottom: 8, padding: 10 }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ width: "100%", marginBottom: 8, padding: 10 }}
+        />
+        {error ? <p className="error">{error}</p> : null}
+        <button type="submit" disabled={loading} style={{ width: "100%", padding: 10 }}>
+          {loading ? "Please wait..." : "Sign In"}
+        </button>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: "0.85rem" }}>
+          <Link href={`/forgot-password`} style={{ color: "var(--brand)" }}>
+            Forgot password?
+          </Link>
+          <Link href={`/signup?next=${encodeURIComponent(safeNext)}`} style={{ color: "var(--brand)" }}>
+            Create an account
+          </Link>
+        </div>
+      </form>
+    </div>
   );
 }
 

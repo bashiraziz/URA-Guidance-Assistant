@@ -38,6 +38,9 @@ _TAX_KEYWORDS: set[str] = {
     "amendment", "act", "statute", "provision", "section", "schedule",
     "zero-rating", "zero", "rated", "supply", "taxable", "threshold",
     "capital gains", "gains", "allowance", "depreciation", "commissioner",
+    "interpretation", "valuation", "market", "value", "fair",
+    "charge", "liable", "person", "associate", "input", "output",
+    "import", "export", "exempt", "rate", "cap", "349", "340",
     "omusolo", "emisolo", "okufayilo", "ebitagobererwa", "ensasula",
     "obwannannyini",
 }
@@ -48,9 +51,9 @@ You are a Uganda tax law assistant. You MUST follow these rules strictly:
 1. Answer PRIMARILY from the provided Evidence excerpts. Cite them by number [1], [2], etc.
 2. If the evidence fully answers the question, use ONLY the evidence.
 3. If the evidence partially answers it, present the evidence-based answer first, then clearly separate any supplementary knowledge with:
-   "\u26a0 **Additional context (not from the indexed URA corpus):** ..."
+   "\u26a0 **Additional context (not from official URA documents on file):** ..."
 4. If your general knowledge includes a MORE RECENT amendment or proclamation than what appears in the evidence, say so explicitly, e.g.:
-   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in the indexed corpus."
+   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in our document library."
 5. Never fabricate legal provisions. If uncertain, say so.
 6. Keep answers concise. Use markdown formatting.
 """
@@ -326,7 +329,9 @@ class OpenAIProvider:
 
 class MockProvider:
     async def is_on_topic(self, question: str, model: str | None = None) -> bool:
-        return _keyword_on_topic(question)
+        # No LLM available — default to on-topic and let the retriever
+        # handle irrelevant questions naturally (no-chunks fallback).
+        return True
 
     async def generate_answer(self, question: str, chunks: list[RetrievedChunk], language_code: str, model: str | None = None) -> LLMResult:
         is_luganda = language_code.startswith("lg")
@@ -337,7 +342,7 @@ class MockProvider:
         top = chunks[:3]
         bullets = "\n".join([f"- **[{idx+1}]** {chunk.title}: {chunk.chunk_text[:260].strip()}..." for idx, chunk in enumerate(top)])
         prefix = "[Luganda mode \u2014 requires LLM provider]\n\n" if is_luganda else ""
-        answer = f"{prefix}Based on the indexed URA corpus:\n\n{bullets}"
+        answer = f"{prefix}Based on official URA documents:\n\n{bullets}"
         return LLMResult(
             answer_md=answer,
             estimated_input_tokens=_estimate_tokens(question),

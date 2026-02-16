@@ -83,13 +83,18 @@ class ChatApi {
     this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
   }
 
-  private async getApiAccess(): Promise<{ token: string; mode: "guest" | "user" }> {
+  private async getApiAccess(): Promise<{ token: string; mode: "guest" | "user"; user_name: string | null }> {
     const response = await fetch("/api/tax/token", { method: "GET" });
     if (!response.ok) {
       throw new Error("Could not mint API token.");
     }
-    const payload = (await response.json()) as { token: string; mode?: "guest" | "user" };
-    return { token: payload.token, mode: payload.mode || "guest" };
+    const payload = (await response.json()) as { token: string; mode?: "guest" | "user"; user_name?: string | null };
+    return { token: payload.token, mode: payload.mode || "guest", user_name: payload.user_name || null };
+  }
+
+  async getAccessInfo(): Promise<{ mode: "guest" | "user"; user_name: string | null }> {
+    const access = await this.getApiAccess();
+    return { mode: access.mode, user_name: access.user_name };
   }
 
   async getAccessMode(): Promise<"guest" | "user"> {

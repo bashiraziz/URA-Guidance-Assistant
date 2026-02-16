@@ -20,6 +20,9 @@ _TAX_KEYWORDS: set[str] = {
     "amendment", "act", "statute", "provision", "section", "schedule",
     "zero-rating", "zero", "rated", "supply", "taxable", "threshold",
     "capital gains", "gains", "allowance", "depreciation", "commissioner",
+    "interpretation", "valuation", "market", "value", "fair",
+    "charge", "liable", "person", "associate", "input", "output",
+    "import", "export", "exempt", "rate", "cap", "349", "340",
     # Luganda tax keywords
     "omusolo", "emisolo", "okufayilo", "ebitagobererwa", "ensasula",
     "obwannannyini",
@@ -60,9 +63,9 @@ You are a Uganda tax law assistant. You MUST follow these rules strictly:
 1. Answer PRIMARILY from the provided Evidence excerpts. Cite them by number [1], [2], etc.
 2. If the evidence fully answers the question, use ONLY the evidence.
 3. If the evidence partially answers it, present the evidence-based answer first, then clearly separate any supplementary knowledge with:
-   "\u26a0 **Additional context (not from the indexed URA corpus):** ..."
+   "\u26a0 **Additional context (not from official URA documents on file):** ..."
 4. If your general knowledge includes a MORE RECENT amendment or proclamation than what appears in the evidence, say so explicitly, e.g.:
-   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in the indexed corpus."
+   "\u26a0 **Note:** There may be a more recent amendment (e.g., [year] Act) not yet in our document library."
 5. Never fabricate legal provisions. If uncertain, say so.
 6. Keep answers concise. Use markdown formatting.
 """
@@ -93,12 +96,10 @@ async def is_on_topic(question: str, settings: Settings, session: AsyncSession |
         return await resolved.provider.is_on_topic(question, model=model)
 
     # Legacy path: no session/user_id provided
-    if settings.gemini_enabled:
+    if settings.gemini_enabled and settings.gemini_api_key:
         try:
             import google.generativeai as genai  # type: ignore
 
-            if not settings.gemini_api_key:
-                return _keyword_on_topic(question)
             genai.configure(api_key=settings.gemini_api_key)
             model = genai.GenerativeModel(settings.gemini_model)
             prompt = (
@@ -111,9 +112,11 @@ async def is_on_topic(question: str, settings: Settings, session: AsyncSession |
             reply = (completion.text or "").strip().upper()
             return reply.startswith("YES")
         except Exception:
-            return _keyword_on_topic(question)
+            pass
 
-    return _keyword_on_topic(question)
+    # No LLM available — default to on-topic and let the retriever
+    # handle irrelevant questions naturally (no-chunks fallback).
+    return True
 
 
 def _keyword_on_topic(question: str) -> bool:
@@ -174,7 +177,7 @@ async def generate_answer(
     bullets = "\n".join([f"- **[{idx+1}]** {chunk.title}: {chunk.chunk_text[:260].strip()}..." for idx, chunk in enumerate(top)])
     prefix = "[Luganda mode — requires Gemini]\n\n" if is_luganda else ""
     answer = (
-        f"{prefix}Based on the indexed URA corpus:\n\n"
+        f"{prefix}Based on official URA documents:\n\n"
         f"{bullets}"
     )
     return LLMResult(

@@ -121,7 +121,7 @@ async def save_provider(
     return ProviderOut(provider=name, masked_key=_mask_key(body.api_key), model_name=body.model_name)
 
 
-@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_provider(
     name: str,
     user_id: str = Depends(get_current_user_id),

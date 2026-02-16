@@ -11,7 +11,11 @@
       "Bash(echo:*)",
       "Bash(# Check what DB the seed pipeline actually connected to by looking at its invocation # The pipeline reads from --database-url or DATABASE_URL env # Let''s check if DATABASE_URL is set in the shell printenv DATABASE_URL)",
       "Bash(npx tsc:*)",
-      "Bash(npx next build)"
+      "Bash(npx next build)",
+      "Bash(pip install:*)",
+      "Bash(npm install:*)",
+      "Bash(npx @anthropic-ai/claude-code@latest:*)",
+      "Bash(node -e:*)"
     ]
   }
 }
